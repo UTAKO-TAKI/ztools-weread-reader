@@ -15,15 +15,39 @@
 - 支持切回微信读书原版界面。
 - ZTools 被 `Alt+Space` 收起时，阅读页面会一起消失。
 
-## 一分钟安装
+## 界面预览
 
-1. 下载本仓库的 ZIP 文件并解压。
-2. 打开 ZTools 的“插件管理”或“开发项目”。
-3. 选择“导入开发项目”或“本地开发”。
-4. 选择解压目录中的 `plugin.json`。
+![ZTools 微信读书插件纯净阅读界面示意](docs/images/reader-preview.png)
+
+> 界面示意使用虚构章节和示例文字，不包含真实账号、二维码、书籍或阅读记录。
+
+## 普通用户安装
+
+不需要安装 Node.js、npm、ZTools CLI，也不需要微信读书 API Key。
+
+1. [下载最新版 ZIP](https://github.com/UTAKO-TAKI/ztools-weread-reader/archive/refs/heads/main.zip)。
+2. 解压 ZIP，保留整个 `ztools-weread-reader-main` 文件夹。
+3. 打开 ZTools 的“开发项目”或“本地开发”入口。
+4. 选择“导入开发项目”，然后选择解压目录中的 `plugin.json`。
 5. 回到 ZTools，输入 `读书`。
 
+`plugin.json` 是 ZTools 识别本地插件的配置入口，字段说明可参考 [ZTools 官方文档](https://ztoolscenter.github.io/ZTools-doc/plugin-json.html)。
+
 首次打开时，请使用微信扫描官方登录二维码。登录成功后手动打开一本书，以后即可自动续读。
+
+### 更新插件
+
+1. 重新下载最新版 ZIP 并解压。
+2. 用新文件替换原来的插件源码目录，或导入新的 `plugin.json`。
+3. 在 ZTools 的开发项目页面重新载入插件。
+
+登录会话保存在 ZTools 的本机网页数据中，不在源码目录里。更新源码后通常无需重新登录；如果会话已经过期，重新扫码即可。
+
+### 退出登录或移除插件
+
+- 退出账号：先返回书架或切换到“原版界面”，在微信读书官方页面退出登录。
+- 移除插件：从 ZTools 的开发项目列表中移除该项目，再删除解压后的源码目录。
+- 如果移除后仍希望清除登录会话，请同时清理 ZTools 中该插件对应的网页数据。
 
 ## 可用指令
 
@@ -74,16 +98,22 @@
 
 纯净模式依赖微信读书网页结构。如果官网改版导致样式失效，可以先在菜单中选择“原版界面”。
 
+### 更新源码后界面没有变化
+
+回到 ZTools 的开发项目页面重新载入插件；仍未更新时，完全退出 ZTools 后重新打开。
+
 ## 项目文件
 
 ```text
-weread-reader/
-├─ index.html       # 插件页面和隔离 webview
-├─ preload.js       # ZTools API、地址校验和续读存储
-├─ renderer.js      # 页面导航、菜单及纯净阅读逻辑
-├─ styles.css       # 插件界面样式
-├─ plugin.json      # ZTools 插件配置和入口指令
-└─ logo.png         # 插件图标
+ztools-weread-reader/
+├─ docs/images/reader-preview.png  # README 界面示意图
+├─ index.html                      # 插件页面和隔离 webview
+├─ preload.js                      # ZTools API、地址校验和续读存储
+├─ renderer.js                     # 页面导航、菜单及纯净阅读逻辑
+├─ styles.css                      # 插件界面样式
+├─ plugin.json                     # ZTools 插件配置和入口指令
+├─ logo.png                        # 插件图标
+└─ README.md                       # 安装与使用说明
 ```
 
 项目不依赖 npm 包，也不需要构建。修改源码后，在 ZTools 中重新载入开发项目即可测试。
@@ -92,7 +122,8 @@ weread-reader/
 
 当前版本主要在 Windows 和 ZTools 3.1.0 环境下测试。微信读书网页版发生改版时，纯净阅读样式可能需要同步调整。
 
+当前仅通过 GitHub 源码分发，尚未发布到 ZTools 插件中心。
+
 ## 说明
 
 “微信读书”及相关名称属于其权利人。本项目仅封装官方网页，和微信读书官方没有隶属或合作关系。
-

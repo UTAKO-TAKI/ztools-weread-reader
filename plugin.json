@@ -3,7 +3,7 @@
   "title": "微信读书",
   "description": "在 ZTools 主窗口内容区直接继续微信读书",
   "author": "ZTools WeRead Reader Contributors",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "main": "index.html",
   "logo": "logo.png",
   "preload": "preload.js",
