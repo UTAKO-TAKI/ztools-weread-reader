@@ -736,39 +736,6 @@
     navigate(HOME_URL, { force: true })
   })
 
-  document.getElementById('catalogButton').addEventListener('click', async function openCatalog() {
-    setMenuOpen(false)
-
-    if (!isReaderPage(getCurrentUrl())) {
-      setStatus('请先从书架打开一本书，再查看目录')
-      return
-    }
-
-    try {
-      const opened = await webview.executeJavaScript(
-        `(() => {
-          const controls = Array.from(document.querySelectorAll('.readerControls_item'))
-          const catalogButton = controls.find((item) => {
-            const label = [
-              item.className,
-              item.getAttribute('title'),
-              item.getAttribute('aria-label'),
-              item.closest('.wr_tooltip_container')?.textContent
-            ].filter(Boolean).join(' ')
-            return item.classList.contains('catalog') || /目录|章节/.test(label)
-          })
-          if (!catalogButton) return false
-          catalogButton.click()
-          return true
-        })()`,
-        true,
-      )
-      setStatus(opened ? '已打开目录' : '当前页面未找到目录，请刷新后重试')
-    } catch (error) {
-      setStatus('目录打开失败，请刷新后重试')
-    }
-  })
-
   document.getElementById('reloadButton').addEventListener('click', function reloadPage() {
     setMenuOpen(false)
     hideError()
