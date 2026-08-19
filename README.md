@@ -25,6 +25,10 @@
 
 不需要安装 Node.js、npm、ZTools CLI，也不需要微信读书 API Key。
 
+推荐直接在 ZTools 插件中心搜索“微信读书”并安装。安装完成后输入 `读书` 即可使用。
+
+也可以从 GitHub 安装源码版：
+
 1. [下载最新版 ZIP](https://github.com/UTAKO-TAKI/ztools-weread-reader/archive/refs/heads/main.zip)。
 2. 解压 ZIP，保留整个 `ztools-weread-reader-main` 文件夹。
 3. 打开 ZTools 的“开发项目”或“本地开发”入口。
@@ -122,7 +126,7 @@ ztools-weread-reader/
 
 当前版本主要在 Windows 和 ZTools 3.1.0 环境下测试。微信读书网页版发生改版时，纯净阅读样式可能需要同步调整。
 
-当前仅通过 GitHub 源码分发，尚未发布到 ZTools 插件中心。
+插件已发布到 ZTools 插件中心，同时保留 GitHub 源码分发。
 
 ## 说明
 

@@ -91,6 +91,54 @@
     }
   }
 
+  function isDarkColors() {
+    try {
+      return Boolean(ztoolsApi().isDarkColors())
+    } catch (error) {
+      return window.matchMedia?.('(prefers-color-scheme: dark)').matches || false
+    }
+  }
+
+  function electronIpcRenderer() {
+    try {
+      if (typeof require !== 'function') return null
+      return require('electron')?.ipcRenderer || null
+    } catch (error) {
+      return null
+    }
+  }
+
+  async function setHostTheme(rawTheme) {
+    const theme = rawTheme === 'dark' ? 'dark' : rawTheme === 'light' ? 'light' : null
+    const result = { applied: false, persisted: false }
+    if (!theme) return result
+
+    const ipcRenderer = electronIpcRenderer()
+    if (!ipcRenderer || typeof ipcRenderer.invoke !== 'function') return result
+
+    try {
+      await ipcRenderer.invoke('set-theme', theme)
+      result.applied = true
+    } catch (error) {
+      console.warn('[WeRead] 同步 ZTools 主题失败:', error)
+      return result
+    }
+
+    try {
+      const savedSettings = await ipcRenderer.invoke('ztools:db-get', 'settings-general')
+      const nextSettings =
+        savedSettings && typeof savedSettings === 'object' && !Array.isArray(savedSettings)
+          ? { ...savedSettings, theme }
+          : { theme }
+      await ipcRenderer.invoke('ztools:db-put', 'settings-general', nextSettings)
+      result.persisted = true
+    } catch (error) {
+      console.warn('[WeRead] 保存 ZTools 主题设置失败:', error)
+    }
+
+    return result
+  }
+
   function emitLaunchIntent(code) {
     window.dispatchEvent(
       new CustomEvent('weread:plugin-enter', {
@@ -114,6 +162,8 @@
     getSavedReaderUrl,
     saveReaderUrl,
     normalizeWereadUrl,
+    isDarkColors,
+    setHostTheme,
 
     openInSystemBrowser(rawUrl) {
       const normalized = normalizeWereadUrl(rawUrl)

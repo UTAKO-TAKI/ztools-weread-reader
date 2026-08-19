@@ -4,12 +4,18 @@
   const bridge = window.wereadBridge
   const HOME_URL = bridge.homeUrl
   const LOAD_ABORTED = -3
+  let hostUsesDarkColors = bridge.isDarkColors()
   document.documentElement.classList.toggle('is-standalone-window', Boolean(bridge.isStandalone))
-  const CLEAN_READER_CSS = `
+  document.documentElement.dataset.theme = hostUsesDarkColors ? 'dark' : 'light'
+  function buildCleanReaderCss(readerUsesDarkColors) {
+    return `
     html:has(body.wr_page_reader) {
       background-color: transparent !important;
       background-image: none !important;
-      color-scheme: dark !important;
+      color-scheme: ${readerUsesDarkColors ? 'dark' : 'light'} !important;
+      --ztools-reader-text: ${readerUsesDarkColors ? '#ffffff' : '#000000'};
+      --ztools-reader-heading: ${readerUsesDarkColors ? '#ffffff' : '#000000'};
+      --ztools-reader-muted: ${readerUsesDarkColors ? '#ffffff' : '#000000'};
     }
 
     body.wr_page_reader,
@@ -24,6 +30,44 @@
     body.wr_page_reader .renderTargetContainer {
       background-color: transparent !important;
       background-image: none !important;
+      opacity: 1 !important;
+      filter: none !important;
+      mix-blend-mode: normal !important;
+    }
+
+    body.wr_page_reader::before,
+    body.wr_page_reader::after,
+    body.wr_page_reader #app::before,
+    body.wr_page_reader #app::after,
+    body.wr_page_reader .readerContent::before,
+    body.wr_page_reader .readerContent::after,
+    body.wr_page_reader .app_content::before,
+    body.wr_page_reader .app_content::after,
+    body.wr_page_reader .readerChapterContent::before,
+    body.wr_page_reader .readerChapterContent::after {
+      background: transparent !important;
+      background-image: none !important;
+    }
+
+    html:has(body.wr_page_reader),
+    body.wr_page_reader,
+    body.wr_page_reader #app,
+    body.wr_page_reader #routerView,
+    body.wr_page_reader .readerContent,
+    body.wr_page_reader .app_content,
+    body.wr_page_reader .readerChapterContent_container,
+    body.wr_page_reader .readerChapterContent,
+    body.wr_page_reader .renderTargetContainer {
+      -ms-overflow-style: none !important;
+      scrollbar-width: none !important;
+    }
+
+    html:has(body.wr_page_reader)::-webkit-scrollbar,
+    body.wr_page_reader::-webkit-scrollbar,
+    body.wr_page_reader *::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
     }
 
     body.wr_page_reader .readerTopBar,
@@ -52,20 +96,59 @@
       padding-top: 20px !important;
     }
 
+    body.wr_page_reader .app_content,
+    body.wr_page_reader .app_content *,
     body.wr_page_reader .readerChapterContent,
     body.wr_page_reader .readerChapterContent * {
-      color: #edf0ee !important;
+      color: var(--ztools-reader-text) !important;
+      -webkit-text-fill-color: var(--ztools-reader-text) !important;
+      opacity: 1 !important;
+      filter: none !important;
+      mix-blend-mode: normal !important;
+      text-shadow: none !important;
     }
 
     body.wr_page_reader .readerChapterContent h1,
     body.wr_page_reader .readerChapterContent h2,
-    body.wr_page_reader .readerChapterContent h3 {
-      color: #f7f8f7 !important;
+    body.wr_page_reader .readerChapterContent h3,
+    body.wr_page_reader .readerChapterContent h1 *,
+    body.wr_page_reader .readerChapterContent h2 *,
+    body.wr_page_reader .readerChapterContent h3 * {
+      color: var(--ztools-reader-heading) !important;
+      -webkit-text-fill-color: var(--ztools-reader-heading) !important;
+      opacity: 1 !important;
     }
 
     body.wr_page_reader .readerContentHeader,
-    body.wr_page_reader .readerFooter {
-      color: #b9bfbb !important;
+    body.wr_page_reader .readerContentHeader *,
+    body.wr_page_reader .readerFooter,
+    body.wr_page_reader .readerFooter * {
+      color: var(--ztools-reader-muted) !important;
+      -webkit-text-fill-color: var(--ztools-reader-muted) !important;
+      opacity: 1 !important;
+      filter: none !important;
+      text-shadow: none !important;
+    }
+
+    body.wr_page_reader .app_content *::before,
+    body.wr_page_reader .app_content *::after,
+    body.wr_page_reader .readerChapterContent *::before,
+    body.wr_page_reader .readerChapterContent *::after,
+    body.wr_page_reader .readerContentHeader *::before,
+    body.wr_page_reader .readerContentHeader *::after,
+    body.wr_page_reader .readerFooter *::before,
+    body.wr_page_reader .readerFooter *::after {
+      color: var(--ztools-reader-text) !important;
+      -webkit-text-fill-color: var(--ztools-reader-text) !important;
+      opacity: 1 !important;
+      text-shadow: none !important;
+    }
+
+    /* 横向阅读的正文由微信读书绘制到 canvas，普通文字颜色规则不会生效。 */
+    body.wr_page_reader .wr_canvasContainer canvas {
+      opacity: 1 !important;
+      filter: ${readerUsesDarkColors ? 'brightness(0) invert(1)' : 'brightness(0)'} !important;
+      mix-blend-mode: normal !important;
     }
 
     body.wr_page_reader .readerControls {
@@ -149,6 +232,17 @@
       box-sizing: border-box !important;
     }
 
+    /* 阅读正文会按主题强制纯黑或纯白；深色工具浮层必须单独恢复为白字。 */
+    body.wr_page_reader.ztools-reader-menu-open .readerControls_item,
+    body.wr_page_reader.ztools-reader-menu-open .readerControls_item *,
+    body.wr_page_reader.ztools-reader-menu-open .readerControls_item::before,
+    body.wr_page_reader.ztools-reader-menu-open .readerControls_item::after {
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+      opacity: 1 !important;
+      text-shadow: none !important;
+    }
+
     body.wr_page_reader.ztools-reader-menu-open .readerControls_item:hover {
       border-color: rgba(255, 255, 255, 0.14) !important;
       background: rgba(255, 255, 255, 0.09) !important;
@@ -160,10 +254,13 @@
       width: 30px !important;
       height: 30px !important;
       margin-right: 5px !important;
+      opacity: 1 !important;
+      filter: brightness(0) invert(1) !important;
     }
 
     body.wr_page_reader.ztools-reader-menu-open .readerControls_item::after {
-      color: #f3f3f3 !important;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
       font: 13px/1.2 "Segoe UI", "Microsoft YaHei UI", sans-serif !important;
       white-space: nowrap !important;
     }
@@ -177,6 +274,7 @@
     body.wr_page_reader.ztools-reader-menu-open .readerControls_item.white::after { content: "浅色"; }
     body.wr_page_reader.ztools-reader-menu-open .readerControls_item.dark::after { content: "深色"; }
   `
+  }
 
   const webview = document.getElementById('readerWebview')
   const loadingOverlay = document.getElementById('loadingOverlay')
@@ -196,9 +294,65 @@
   let activeReaderStyleKey = null
   let readerStyleApplying = false
   let readerStyleNeedsRefresh = false
+  let readerThemeRequestId = 0
+  let readerThemeRequestInFlight = false
+  let hostThemeReconcileTimer = null
 
   function setStatus(message) {
     statusText.textContent = message
+  }
+
+  async function syncHostTheme(theme) {
+    if (theme !== 'dark' && theme !== 'light') return
+
+    hostUsesDarkColors = theme === 'dark'
+    document.documentElement.dataset.theme = theme
+
+    try {
+      const result = await bridge.setHostTheme(theme)
+      if (!result?.applied) {
+        setStatus(`微信读书已切换为${theme === 'dark' ? '深色' : '浅色'}，ZTools 主题同步不可用`)
+        return
+      }
+
+      setStatus(
+        result.persisted
+          ? `微信读书与 ZTools 已同步为${theme === 'dark' ? '深色' : '浅色'}模式`
+          : `ZTools 已切换为${theme === 'dark' ? '深色' : '浅色'}，但未能保存该设置`,
+      )
+    } catch (error) {
+      setStatus(`微信读书已切换为${theme === 'dark' ? '深色' : '浅色'}，ZTools 主题同步失败`)
+    }
+  }
+
+  function wait(milliseconds) {
+    return new Promise((resolve) => window.setTimeout(resolve, milliseconds))
+  }
+
+  async function readReaderThemeFromControls() {
+    try {
+      const theme = await webview.executeJavaScript(
+        `(() => {
+          const switchToLight = document.querySelector('.readerControls_item.white')
+          const switchToDark = document.querySelector('.readerControls_item.dark')
+          if (switchToLight && !switchToDark) return 'dark'
+          if (switchToDark && !switchToLight) return 'light'
+          return null
+        })()`,
+        true,
+      )
+      return theme === 'dark' || theme === 'light' ? theme : null
+    } catch (error) {
+      return null
+    }
+  }
+
+  async function waitForReaderTheme(expectedTheme) {
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      await wait(attempt === 0 ? 80 : 120)
+      if ((await readReaderThemeFromControls()) === expectedTheme) return true
+    }
+    return false
   }
 
   function setRemoteMenuOpen(isOpen) {
@@ -226,9 +380,16 @@
           if (window.__ztoolsReaderMenuHookInstalled) return true
           window.__ztoolsReaderMenuHookInstalled = true
           document.addEventListener('click', (event) => {
-            if (event.target.closest('.readerControls_item')) {
-              window.setTimeout(() => console.log('__ZTOOLS_READER_MENU_SELECT__'), 600)
-            }
+            const item = event.target.closest('.readerControls_item')
+            if (!item) return
+
+            const requestedTheme = item.classList.contains('dark')
+              ? 'dark'
+              : item.classList.contains('white')
+                ? 'light'
+                : ''
+            if (requestedTheme) console.log('__ZTOOLS_READER_THEME__:' + requestedTheme)
+            window.setTimeout(() => console.log('__ZTOOLS_READER_MENU_SELECT__'), 600)
           }, false)
           return true
         })()`,
@@ -303,7 +464,74 @@
     } catch (error) {}
   }
 
-  async function applyReaderPresentation(rawUrl) {
+  async function detectReaderTheme() {
+    const fallbackTheme = hostUsesDarkColors ? 'dark' : 'light'
+
+    try {
+      const detectedTheme = await webview.executeJavaScript(
+        `(() => {
+          if (document.querySelector('.wr_darkTheme')) return 'dark'
+          if (document.querySelector('.wr_whiteTheme')) return 'light'
+
+          // 微信读书只渲染“可切换到”的主题按钮：当前深色时出现 white，
+          // 当前浅色时出现 dark。透明阅读背景下，这比按文字亮度反推更可靠。
+          const switchToLight = document.querySelector('.readerControls_item.white')
+          const switchToDark = document.querySelector('.readerControls_item.dark')
+          if (switchToLight && !switchToDark) return 'dark'
+          if (switchToDark && !switchToLight) return 'light'
+
+          const themeNodes = [
+            document.documentElement,
+            document.body,
+            document.getElementById('app'),
+            document.getElementById('routerView'),
+            document.querySelector('.readerContent'),
+            document.querySelector('.wr_horizontalReader')
+          ].filter(Boolean)
+          const classText = themeNodes.map((node) => String(node.className || '')).join(' ')
+          if (/\\bwr_darkTheme\\b/.test(classText)) return 'dark'
+          if (/\\bwr_whiteTheme\\b/.test(classText)) return 'light'
+
+          const parseColor = (value) => {
+            const parts = String(value).match(/[\\d.]+/g)
+            if (!parts || parts.length < 3) return null
+            return {
+              red: Number(parts[0]),
+              green: Number(parts[1]),
+              blue: Number(parts[2]),
+              alpha: parts.length > 3 ? Number(parts[3]) : 1
+            }
+          }
+          const luminance = (color) =>
+            (color.red * 0.2126 + color.green * 0.7152 + color.blue * 0.0722) / 255
+
+          const surfaceNodes = [
+            document.querySelector('.wr_horizontalReader .readerChapterContent'),
+            document.querySelector('.readerContent .app_content'),
+            document.querySelector('.readerChapterContent'),
+            document.querySelector('.readerContent'),
+            document.body,
+            document.documentElement
+          ].filter(Boolean)
+          for (const node of surfaceNodes) {
+            const color = parseColor(getComputedStyle(node).backgroundColor)
+            if (color && color.alpha >= 0.35) return luminance(color) < 0.45 ? 'dark' : 'light'
+          }
+
+          // 透明背景会让原站的半透明文字亮度失去判断意义；此时跟随已同步的
+          // ZTools 主题，避免浅色被误判成深色或反过来。
+          return null
+        })()`,
+        true,
+      )
+
+      return detectedTheme === 'dark' || detectedTheme === 'light' ? detectedTheme : fallbackTheme
+    } catch (error) {
+      return fallbackTheme
+    }
+  }
+
+  async function applyReaderPresentation(rawUrl, requestedTheme = null) {
     const readerPage = isReaderPage(rawUrl)
     syncLocalChrome(rawUrl)
 
@@ -319,7 +547,12 @@
     readerStyleApplying = true
     try {
       await removeReaderStyle()
-      activeReaderStyleKey = await webview.insertCSS(CLEAN_READER_CSS)
+      const readerTheme =
+        requestedTheme === 'dark' || requestedTheme === 'light'
+          ? requestedTheme
+          : await detectReaderTheme()
+      activeReaderStyleKey = await webview.insertCSS(buildCleanReaderCss(readerTheme === 'dark'))
+      document.documentElement.dataset.readerTheme = readerTheme
       readerStyleNeedsRefresh = false
       dispatchReaderResize()
       installReaderMenuHook()
@@ -329,6 +562,52 @@
     } finally {
       readerStyleApplying = false
     }
+  }
+
+  async function handleReaderThemeRequest(expectedTheme) {
+    if (expectedTheme !== 'dark' && expectedTheme !== 'light') return
+
+    const requestId = ++readerThemeRequestId
+    readerThemeRequestInFlight = true
+    setStatus(`正在切换为${expectedTheme === 'dark' ? '深色' : '浅色'}模式…`)
+
+    try {
+      const confirmed = await waitForReaderTheme(expectedTheme)
+      if (requestId !== readerThemeRequestId) return
+
+      const actualTheme = confirmed
+        ? expectedTheme
+        : (await readReaderThemeFromControls()) || (await detectReaderTheme())
+
+      readerStyleNeedsRefresh = true
+      await applyReaderPresentation(getCurrentUrl(), actualTheme)
+      if (requestId !== readerThemeRequestId) return
+
+      await syncHostTheme(actualTheme)
+
+      if (!confirmed) {
+        setStatus(
+          `微信读书未完成主题切换，已恢复为${actualTheme === 'dark' ? '深色' : '浅色'}模式`,
+        )
+      }
+    } finally {
+      if (requestId === readerThemeRequestId) readerThemeRequestInFlight = false
+    }
+  }
+
+  function scheduleHostThemeReconcile() {
+    if (hostThemeReconcileTimer) window.clearTimeout(hostThemeReconcileTimer)
+    hostThemeReconcileTimer = window.setTimeout(async () => {
+      hostThemeReconcileTimer = null
+      if (readerThemeRequestInFlight || !isReaderPage(getCurrentUrl())) return
+
+      const readerTheme = (await readReaderThemeFromControls()) || (await detectReaderTheme())
+      readerStyleNeedsRefresh = true
+      await applyReaderPresentation(getCurrentUrl(), readerTheme)
+
+      const hostTheme = hostUsesDarkColors ? 'dark' : 'light'
+      if (hostTheme !== readerTheme) await syncHostTheme(readerTheme)
+    }, 900)
   }
 
   function getCurrentUrl() {
@@ -457,6 +736,39 @@
     navigate(HOME_URL, { force: true })
   })
 
+  document.getElementById('catalogButton').addEventListener('click', async function openCatalog() {
+    setMenuOpen(false)
+
+    if (!isReaderPage(getCurrentUrl())) {
+      setStatus('请先从书架打开一本书，再查看目录')
+      return
+    }
+
+    try {
+      const opened = await webview.executeJavaScript(
+        `(() => {
+          const controls = Array.from(document.querySelectorAll('.readerControls_item'))
+          const catalogButton = controls.find((item) => {
+            const label = [
+              item.className,
+              item.getAttribute('title'),
+              item.getAttribute('aria-label'),
+              item.closest('.wr_tooltip_container')?.textContent
+            ].filter(Boolean).join(' ')
+            return item.classList.contains('catalog') || /目录|章节/.test(label)
+          })
+          if (!catalogButton) return false
+          catalogButton.click()
+          return true
+        })()`,
+        true,
+      )
+      setStatus(opened ? '已打开目录' : '当前页面未找到目录，请刷新后重试')
+    } catch (error) {
+      setStatus('目录打开失败，请刷新后重试')
+    }
+  })
+
   document.getElementById('reloadButton').addEventListener('click', function reloadPage() {
     setMenuOpen(false)
     hideError()
@@ -488,8 +800,18 @@
     navigate(HOME_URL, { force: true })
   })
 
-  webview.addEventListener('console-message', function closeMenuAfterReaderCommand(event) {
-    if (event.message === '__ZTOOLS_READER_MENU_SELECT__') setMenuOpen(false)
+  webview.addEventListener('console-message', function handleReaderCommand(event) {
+    const themeMatch = /^__ZTOOLS_READER_THEME__:(dark|light)$/.exec(event.message)
+    if (themeMatch) {
+      void handleReaderThemeRequest(themeMatch[1])
+      return
+    }
+
+    if (event.message !== '__ZTOOLS_READER_MENU_SELECT__') return
+    setMenuOpen(false)
+    if (readerThemeRequestInFlight) return
+    readerStyleNeedsRefresh = true
+    applyReaderPresentation(getCurrentUrl())
   })
 
   webview.addEventListener('did-start-loading', function onStartLoading() {
@@ -504,6 +826,7 @@
     const currentUrl = getCurrentUrl()
     handleNavigation(currentUrl)
     applyReaderPresentation(currentUrl)
+    scheduleHostThemeReconcile()
     if (currentUrl === HOME_URL) didAutoFallback = false
     setStatus('微信读书已打开')
   })
@@ -513,6 +836,7 @@
     const currentUrl = getCurrentUrl()
     handleNavigation(currentUrl)
     applyReaderPresentation(currentUrl)
+    scheduleHostThemeReconcile()
     updateBackButton()
     setStatus('微信读书已打开')
   })
@@ -537,6 +861,7 @@
     try {
       event.preventDefault()
     } catch (error) {}
+
     setStatus('已阻止网页弹出新窗口')
   })
 
